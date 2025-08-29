@@ -4,25 +4,17 @@ import de.medieninformatik.mypmaapp.R
 import de.medieninformatik.mypmaapp.model.Category
 import de.medieninformatik.mypmaapp.model.PmaEntry
 
-/* ─────────────────────────────────────────────────────────────
- * DemoData: kleine Startkollektion für Onboarding/Entwicklung
- * - Wird idempotent über Repository.seedDemoIfMissing() eingefügt
- * - Eindeutigkeit erfolgt per Titel (bitte Titel stabil halten)
- * - Die hier gesetzten IDs sind Platzhalter; die DB vergibt eigene
- *   Primärschlüssel beim Insert.
- * ───────────────────────────────────────────────────────────── */
+/*
+* vordefinierte Aktivitäten beim ersten Starten der App
+* */
 
-/**
- * Liefert eine geordnete Liste vordefinierter Momente
- * (für „erste App-Nutzung“ oder Demo-Inhalte).
- */
 object DemoData {
     fun initial() = listOf(
-        // Entspannung • Icon: mindfulness_24px
+        // Entspannung
         PmaEntry(
             id = 1,
             title = "Atemübung",
-            description = "5 bewusste Atemzüge",
+            description = "1 Minute bewusst Atmen",
             category = Category.ENTSPANNUNG,
             imageRes = R.drawable.mindfulness_24px
         ),
@@ -40,7 +32,7 @@ object DemoData {
         PmaEntry(
             id = 3,
             title = "Kurzspaziergang",
-            description = "10 Min. ohne Handy",
+            description = "10 Minuten an der frischen Luft",
             category = Category.BEWEGUNG,
             imageRes = R.drawable.nature_people_24px
         )

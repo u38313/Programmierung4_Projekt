@@ -10,17 +10,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/* ─────────────────────────────────────────────────────────────
+/* -------------------------------------------------------------------
  * AppDatabase
- * Zentrale Room-Datenbank.
- *
- * - Beinhaltet die Tabellen:
- *     • entries (PmaEntryEntity)
- *     • activity_logs (ActivityLogEntity)
- * - Stellt das DAO (PmaDao) bereit.
- * - Erstinitialisierung: Preseed mit DemoData in onCreate().
- *   (wird nur beim allerersten Anlegen der DB ausgeführt)
- * ───────────────────────────────────────────────────────────── */
+ * Zentrale Room-Datenbank mit
+ * Tabelle entries für Aktivitäteneinträge
+ * Tabelle activity_logs für Aktivitäten Log Einträge
+ */
 @Database(
     entities = [PmaEntryEntity::class, ActivityLogEntity::class],
     version = 1,
@@ -28,13 +23,13 @@ import kotlinx.coroutines.launch
 )
 abstract class AppDatabase : RoomDatabase() {
 
-    /** Zugriffspunkt für alle Datenbankoperationen. */
+    // Zugriffspunkt für Datenbankoperationen
     abstract fun dao(): PmaDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
 
-        /** Singleton-Instanz der Datenbank liefern/erstellen. */
+        // Singleton-Instanz
         fun get(context: Context): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(
@@ -44,13 +39,11 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     .addCallback(object : Callback() {
 
-                        /** Wird nur beim ersten Erstellen der DB aufgerufen. */
+                        // Wird nur beim ersten Erstellen der DB aufgerufen
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
 
-                            // Preseed: Demo-Einträge asynchron einfügen.
-                            // Hinweis: Wir holen uns ein DAO über get(context),
-                            // um Inserts bequem per DAO vorzunehmen.
+                            //Demo Daten Aktivitäten werden eingetragen
                             CoroutineScope(Dispatchers.IO).launch {
                                 val dao = get(context).dao()
                                 val initial = DemoData.initial().map {

@@ -25,7 +25,7 @@ private object CP {
     val defaultDia            = Color(0xFF9E9E9E)
 }
 
-/** Liefert die Hintergrundfarbe je Kategorie. */
+/* Liefert die Hintergrundfarbe je Kategorie. */
 fun categoryBackgroundColor(cat: String): Color = when (cat) {
     Category.ENTSPANNUNG -> CP.entspannBg
     Category.KREATIVITAET -> CP.kreativBg
@@ -33,7 +33,7 @@ fun categoryBackgroundColor(cat: String): Color = when (cat) {
     else -> CP.defaultBg
 }
 
-/** Liefert die Diagrammfarbe je Kategorie. */
+/* Liefert die Diagrammfarbe je Kategorie. */
 fun categoryDiagramColor(cat: String): Color = when (cat) {
     Category.ENTSPANNUNG -> CP.entspannDia
     Category.KREATIVITAET -> CP.kreativDia

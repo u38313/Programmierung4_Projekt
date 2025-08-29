@@ -59,11 +59,11 @@ import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.Locale
 
-/* ────────────────────────────────────────────────────────────
+/* -----------------------------------------------------------
  * Start
- * ──────────────────────────────────────────────────────────── */
+ */
 
-/** Host-Aktivität: setzt das Compose-Theme und rendert den App-Root. */
+// setzt das Compose-Theme und rendert App-Root
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,11 +73,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/* ────────────────────────────────────────────────────────────
- * Navigation
- * ──────────────────────────────────────────────────────────── */
-
-/** Zentrale Routen-Bezeichner für den NavHost. */
+// Routen-Bezeichnungen für den NavHost
 private object Routes {
     const val Splash = "splash"
     const val Home = "home"
@@ -85,19 +81,9 @@ private object Routes {
     const val Impressum = "impressum"
 }
 
-/** (Derzeit nicht verwendet) – mögliche Container-Struktur für lokalen UI-State. */
-private data class AppState(
-    val items: List<PmaEntry>,
-    val logs: List<ActivityLog>,
-    val nextEntryId: Int,
-    val nextLogId: Int
-)
-
-/* ────────────────────────────────────────────────────────────
- * App-Root / Navigation + BottomBar
- * ──────────────────────────────────────────────────────────── */
-
-/** Baut Navigation, bindet ViewModel-Streams und zeigt die Bottom Navigation. */
+/* ----------------------------------------------------------------
+ * App-Root mit Navigation
+ */
 @Composable
 private fun AppRoot() {
     val nav = rememberNavController()
@@ -106,15 +92,16 @@ private fun AppRoot() {
     val entries by vm.entries.collectAsState()
     val logs by vm.logs.collectAsState()
 
-    // Einmaliges Seed + direkt zum Home-Screen.
+    // zum Home Screen
     LaunchedEffect(Unit) {
         nav.navigate(Routes.Home) { popUpTo(Routes.Splash) { inclusive = true } }
-        vm.seedDemoDefaults(DemoData.initial())
     }
 
+    //Bottom-Navigation Liste der Seiten / Routen
     val bottomDestinations = listOf(Routes.Home to "Aktivitäten", Routes.Activity to "Aufzeichnungen")
 
     Scaffold(
+        //Bottom Navigation Bar
         bottomBar = {
             val backStack by nav.currentBackStackEntryAsState()
             val currentRoute = backStack?.destination?.route
@@ -148,6 +135,8 @@ private fun AppRoot() {
                 }
             }
         }
+
+        //Navigation Host
     ) { padding ->
         NavHost(
             navController = nav,
@@ -166,7 +155,7 @@ private fun AppRoot() {
                 )
             }
             composable(Routes.Activity) {
-                ActivityScreen(
+                ActivityLogScreen(
                     logs = logs,
                     entries = entries,
                     onOpenImpressum = { nav.navigate(Routes.Impressum) }
@@ -177,11 +166,11 @@ private fun AppRoot() {
     }
 }
 
-/* ────────────────────────────────────────────────────────────
- * Splash
- * ──────────────────────────────────────────────────────────── */
+/* ------------------------------------------------------------------
+   Ladebildschirm
+ */
 
-/** Einfache Lade-Ansicht beim Start. */
+//Einfache Ladeansicht beim Start
 @Composable
 private fun SplashScreen() {
     Surface(Modifier.fillMaxSize()) {
@@ -193,8 +182,8 @@ private fun SplashScreen() {
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(
-                        painter = painterResource(id = R.drawable.relax_24px),
-                        contentDescription = "Logo",
+                        painter = painterResource(id = R.drawable.cached_24px),
+                        contentDescription = "Loading",
                         modifier = Modifier.size(96.dp)
                     )
                     Spacer(Modifier.height(24.dp))
@@ -207,13 +196,12 @@ private fun SplashScreen() {
     }
 }
 
-/* ────────────────────────────────────────────────────────────
- * Aktivitäten Screen
- * ──────────────────────────────────────────────────────────── */
+/* -------------------------------------------------------------
+ * Aktivitäten Screen (Home Screen)
+ */
 
-/**
- * Zeigt die Aktivitätskarten, Filter und den Hinzufügen-Dialogfenster.
- * @param onCreateEntry Callback zum Anlegen neuer Einträge.
+/*
+ * Zeigt die Aktivitätskarten, Filter und Hinzufügen Button
  */
 @Composable
 private fun HomeScreen(
@@ -228,12 +216,15 @@ private fun HomeScreen(
     var showAdd by remember { mutableStateOf(false) }
 
     Scaffold(
+        //Seitentitel und Infobutton
         topBar = {
             TopAppBar(
-                title = { Text("MyPmaApp – Momente") },
+                title = { Text("Meine PMA App – Aktivitäten") },
                 actions = { IconButton(onClick = onOpenImpressum) { Icon(Icons.Default.Info, "Impressum") } }
             )
         },
+
+        //Hinzufügen Button
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { showAdd = true },
@@ -241,11 +232,12 @@ private fun HomeScreen(
                 contentColor = Color.Black
             ) { Text("Hinzufügen") }
         }
+
+        //Filterleiste
     ) { padding ->
         val filters = remember { listOf("Alle") + Category.ALL }
         var selected by rememberSaveable { mutableStateOf("Alle") }
 
-        // Filtern ohne Reihenfolge zu verändern.
         val displayEntries = remember(entries, selected) {
             if (selected == "Alle") entries else entries.filter { it.category == selected }
         }
@@ -273,6 +265,7 @@ private fun HomeScreen(
                 }
             }
 
+            //Info wenn keine Aktivitäten vorhanden
             if (displayEntries.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -280,20 +273,22 @@ private fun HomeScreen(
                         .padding(12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Hier ist noch nichts. Tippe auf „Hinzufügen“.")
+                    Text("Noch keine Aktivitäten. Tippe auf „Hinzufügen“.")
                 }
             } else {
-                // Platz lassen, damit der FAB unten keine Karte überdeckt.
+                // Values für Hinzufügen Button extra Platz unten
                 val fabHeight = 28.dp
                 val fabMargin = 8.dp
                 val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
                 val fabClearance = fabHeight + fabMargin + bottomInset
 
+                //Aktivitäten-Cards Liste
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    //Aktivitätenkarten
                     items(displayEntries, key = { it.id }) { entry ->
                         PmaCard(
                             entry = entry,
@@ -301,11 +296,13 @@ private fun HomeScreen(
                             onLog = { onLog(entry) }
                         )
                     }
+                    //Spacer für Hinzufügen Button
                     item { Spacer(Modifier.height(fabClearance)) }
                 }
             }
         }
 
+        //Aktivität Löschen Dialog Fenster
         if (toDelete != null) {
             AlertDialog(
                 onDismissRequest = { toDelete = null },
@@ -328,6 +325,7 @@ private fun HomeScreen(
             )
         }
 
+        //Aktitvität Hinzufügen Dialogfenster (in AddEntryDialog.kt)
         if (showAdd) {
             AddEntryDialog(
                 onDismiss = { showAdd = false },
@@ -337,11 +335,11 @@ private fun HomeScreen(
     }
 }
 
-/* ────────────────────────────────────────────────────────────
+/* ---------------------------------------------------------------------
  * Aktivitätskarte
- * ──────────────────────────────────────────────────────────── */
+ */
 
-/** Einzelne Moment-Karte mit Kategorie, Titel, Beschreibung und Log-Button. */
+// Einzelne Aktivitätskarte mit Kategorie, Titel, Beschreibung und Aufzeichnen-Button. */
 @Composable
 private fun PmaCard(
     entry: PmaEntry,
@@ -355,14 +353,18 @@ private fun PmaCard(
         colors = CardDefaults.cardColors(containerColor = bg)
     ) {
         Box(Modifier.fillMaxWidth()) {
+
+            //Löschen Button
             IconButton(
                 onClick = onRequestDelete,
-                modifier = Modifier.align(Alignment.TopEnd) // Delete oben rechts platzieren
+                modifier = Modifier.align(Alignment.TopEnd)
             ) {
                 Icon(Icons.Default.Delete, contentDescription = "Löschen", tint = Color.Gray)
             }
 
             Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+
+                //Icon
                 Image(
                     painter = painterResource(entry.imageRes),
                     contentDescription = null,
@@ -370,6 +372,7 @@ private fun PmaCard(
                 )
                 Spacer(Modifier.width(12.dp))
 
+                //Inhalt (Kategorie, Titel, Beschreibung)
                 Column(Modifier.weight(1f)) {
                     Text(entry.category, style = MaterialTheme.typography.labelMedium, color = Color.Black.copy(alpha = 0.8f))
                     Text(entry.title, style = MaterialTheme.typography.titleLarge, color = Color.Black)
@@ -382,6 +385,7 @@ private fun PmaCard(
                         modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
                     )
 
+                    //Aufzeichnen Button
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         Button(
                             onClick = onLog,
@@ -402,16 +406,14 @@ private fun PmaCard(
     }
 }
 
-/* ────────────────────────────────────────────────────────────
+/* --------------------------------------------------------------------
  * Aufzeichnungen Screen
- * ──────────────────────────────────────────────────────────── */
-
-/**
- * Zeigt 7-Tage-Stacked-Bar, Tages-Pie-Chart und die Liste der geloggten Aktivitäten.
- * Sammlung erfolgt clientseitig aus den Logs.
  */
+
+
+//Zeigt 7-Tage-Stacked-Bar, Tages-Pie-Chart und die Liste der geloggten Aktivitäten.
 @Composable
-private fun ActivityScreen(
+private fun ActivityLogScreen(
     logs: List<ActivityLog>,
     entries: List<PmaEntry>,
     onOpenImpressum: () -> Unit
@@ -419,10 +421,10 @@ private fun ActivityScreen(
     val entryById = remember(entries) { entries.associateBy { it.id } }
     val zone = remember { ZoneId.systemDefault() }
     val today = remember { LocalDate.now(zone) }
-    val days = remember(today) { (0..6).map { today.minusDays((6 - it).toLong()) } } // älteste → neueste
+    val days = remember(today) { (0..6).map { today.minusDays((6 - it).toLong()) } }
     val categories = remember { de.medieninformatik.mypmaapp.model.Category.ALL }
 
-    // 7 Tage → Map<Kategorie, Anzahl> pro Tag berechnen.
+    // Anzahl pro Tag berechnen
     val countsByDay = remember(logs, entries) {
         val initMap = { categories.associateWith { 0 }.toMutableMap() }
         val dayMaps = days.associateWith { initMap() }.toMutableMap()
@@ -437,16 +439,18 @@ private fun ActivityScreen(
         days.map { dayMaps.getValue(it).toMap() }
     }
     val todayCounts = remember(countsByDay) { countsByDay.last() }
-
-    val chartHPad = 16.dp // gleiches Padding für Chart & Labels
+    val chartHPad = 16.dp
 
     Scaffold(
+        //Seitentitel
         topBar = {
             TopAppBar(
-                title = { Text("Aktivitäten & Statistik") },
+                title = { Text("Aktivitäten & Statistiken") },
                 actions = { IconButton(onClick = onOpenImpressum) { Icon(Icons.Default.Info, "Impressum") } }
             )
         }
+
+        //Column für Elemente
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -455,14 +459,14 @@ private fun ActivityScreen(
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Wochenübersicht (Stacked Bar)
+            // 7-Tage Diagramm (Stacked Bar Chart)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = LightBlue)
                 ) {
                     Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Letzte 7 Tage (gestapelt)", style = MaterialTheme.typography.titleMedium)
+                        Text("Letzte 7 Tage", style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.height(8.dp))
                         WeeklyStackedBarChart(
                             data = countsByDay,
@@ -493,7 +497,7 @@ private fun ActivityScreen(
                 }
             }
 
-            // Heute (Pie)
+            // heutiges Tages Diagramm (Pie Chart)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -501,7 +505,7 @@ private fun ActivityScreen(
                 ) {
                     Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         val dateStr = "%02d.%02d.%04d".format(today.dayOfMonth, today.monthValue, today.year)
-                        Text("Heute ($dateStr)", style = MaterialTheme.typography.titleMedium)
+                        Text("Heute", style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.height(8.dp))
                         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                             DailyPieChart(counts = todayCounts, categories = categories, size = 180.dp)
@@ -541,11 +545,9 @@ private fun ActivityScreen(
     }
 }
 
-/* ────────────────────────────────────────────────────────────
- * Legende
- * ──────────────────────────────────────────────────────────── */
-
-/** Farblegende für die Kategorien (kleine Farbchips + Label). */
+/* --------------------------------------------------------------
+ * Legende für Diagramme
+*/
 @Composable
 private fun CategoryLegend(categories: List<String>) {
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -560,11 +562,11 @@ private fun CategoryLegend(categories: List<String>) {
     }
 }
 
-/* ────────────────────────────────────────────────────────────
- * Charts
- * ──────────────────────────────────────────────────────────── */
+/* ------------------------------------------------------------------------
+ * Diagramme
+ */
 
-/** Gestapeltes Wochen-Balkendiagramm (7 Tage, fixe Kategorien-Reihenfolge). */
+//7 Tage Diagramm, Stacked Bar Chart, Bars unterteilt nach Kategorien
 @Composable
 private fun WeeklyStackedBarChart(
     data: List<Map<String, Int>>,
@@ -607,13 +609,13 @@ private fun WeeklyStackedBarChart(
                     topLeft = Offset(left, top),
                     size = Size(width = barWidth, height = segHeight)
                 )
-                topCursor = top // nächste Schicht oben aufsetzen
+                topCursor = top
             }
         }
     }
 }
 
-/** Kreisdiagramm für die heutigen Anteile je Kategorie. */
+// heutiges Tagesdiagramm, Pie Chart unterteilt nach Kategorie
 @Composable
 private fun DailyPieChart(
     counts: Map<String, Int>,
@@ -624,7 +626,10 @@ private fun DailyPieChart(
     val total = counts.values.sum().coerceAtLeast(1)
 
     Canvas(modifier = Modifier.size(size)) {
-        var startAngle = -90f // Start oben (12 Uhr)
+        // Start oben
+        var startAngle = -90f
+
+        //Zählt Einträge in Kategorie, berechnet Winkel und zeichnet in Pie Chart
         categories.forEach { cat ->
             val v = counts[cat] ?: 0
             if (v <= 0) return@forEach
@@ -640,17 +645,20 @@ private fun DailyPieChart(
     }
 }
 
-/* ────────────────────────────────────────────────────────────
+/* -----------------------------------------------------------------------------
  * Eintrag für Aktivitätsliste
- * ──────────────────────────────────────────────────────────── */
+ */
 
-/** Einzelner Log-Eintrag in der Liste, farblich passend zur Kategorie. */
+// Einzelner Log-Eintrag in der Liste
 @Composable
 private fun ActivityRow(log: ActivityLog, entry: PmaEntry?) {
+
+    //Uhrzeit
     val zone = remember { ZoneId.systemDefault() }
     val dt = Instant.ofEpochMilli(log.timestamp).atZone(zone)
     val dateStr = "%02d.%02d.%04d %02d:%02d".format(dt.dayOfMonth, dt.monthValue, dt.year, dt.hour, dt.minute)
 
+    //Hintergrundfarbe
     val container = entry?.let { categoryBackgroundColor(it.category) } ?: LightBlue
 
     Surface(
@@ -683,17 +691,17 @@ private fun ActivityRow(log: ActivityLog, entry: PmaEntry?) {
     }
 }
 
-/* ────────────────────────────────────────────────────────────
- * Impressum + Info
- * ──────────────────────────────────────────────────────────── */
-
-/** Informations- und Impressumsseite */
+/* --------------------------------------------------------------
+ * Impressum + Information Seite
+ */
 @Composable
 private fun ImpressumScreen(onBack: () -> Unit) {
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val fabClearance = 56.dp + 16.dp + bottomInset // Platz, damit der FAB nichts überdeckt
 
     Scaffold(
+
+        //Seitentitel
         topBar = { TopAppBar(title = { Text("Information & Impressum") }) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -702,6 +710,8 @@ private fun ImpressumScreen(onBack: () -> Unit) {
                 contentColor = Color.Black
             ) { Text("Zurück") }
         }
+
+        //Inhalt
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -710,6 +720,8 @@ private fun ImpressumScreen(onBack: () -> Unit) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+
+            //Informationen über die App
             item {
                 Text("Über die App", style = MaterialTheme.typography.titleLarge)
                 val about =
@@ -724,12 +736,14 @@ private fun ImpressumScreen(onBack: () -> Unit) {
                 )
             }
 
+            //Impressum
             item {
                 Text("Impressum", style = MaterialTheme.typography.titleLarge)
                 val impress =
                     "Autor: Moritz Kube\n" +
                             "Studiengang: Medieninformatik\n" +
-                            "Kontext: Erstellt im Sommersemester 2025 für das Modul „Programmierung 4“ an der Hochschule Harz – Hochschule für angewandte Wissenschaften."
+                            "Kontext: Erstellt im Sommersemester 2025 für das Modul „Programmierung 4“ an der Hochschule Harz – Hochschule für angewandte Wissenschaften. \n \n"+
+                            "Alle Icons von Android Compose und Google Fonts"
                 Text(
                     impress,
                     modifier = Modifier
@@ -740,6 +754,7 @@ private fun ImpressumScreen(onBack: () -> Unit) {
                 )
             }
 
+            //Spacer für zurück Button
             item { Spacer(Modifier.height(fabClearance)) }
         }
     }

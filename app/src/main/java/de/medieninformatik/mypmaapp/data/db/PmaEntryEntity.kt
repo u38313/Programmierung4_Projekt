@@ -3,22 +3,18 @@ package de.medieninformatik.mypmaapp.data.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-/* ─────────────────────────────────────────────────────────────
- * PmaEntryEntity
- * Room-Entity für einen Moment/Eintrag, wie er in der DB gespeichert wird.
- * - Primärschlüssel wird von Room automatisch vergeben.
- * - timestamp wird clientseitig beim Erstellen gesetzt (Millis seit Epoch).
- * ───────────────────────────────────────────────────────────── */
-
+/*
+ * Aktivitätseintrag Entity für die Datenbank
+ */
 @Entity(tableName = "entries")
 data class PmaEntryEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,                  // DB-ID (autogeneriert)
+    val id: Long = 0,                  // Primärschlüssel ID
 
-    val title: String,                 // Titel des Moments
-    val description: String,           // Beschreibung/Details
-    val category: String,              // Kategorie (z. B. Entspannung)
-    val imageRes: Int,                 // Drawable-ResId für das Karten-Icon
+    val title: String,                 // Titel
+    val description: String,           // Beschreibung
+    val category: String,              // Kategorie
+    val imageRes: Int,                 // Icon ID
 
-    val timestamp: Long = System.currentTimeMillis() // Erstellzeitpunkt (ms)
+    val timestamp: Long = System.currentTimeMillis() // Zeitstempel
 )

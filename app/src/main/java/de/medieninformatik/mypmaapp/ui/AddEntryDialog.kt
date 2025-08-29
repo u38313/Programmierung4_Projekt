@@ -26,27 +26,18 @@ import de.medieninformatik.mypmaapp.model.Category
 import de.medieninformatik.mypmaapp.ui.theme.LightBlue
 import de.medieninformatik.mypmaapp.ui.theme.NavBlue
 
-/* ────────────────────────────────────────────────────────────────
- * Eingaberichtlinien (Regex)
- *  - Erlaubt: Buchstaben (inkl. Ä/Ö/Ü/ß), diakritische Zeichen,
- *    Ziffern, gängige Satz-/Symbols-Zeichen, Emojis (ZWJ + VS16),
- *    Leerzeichen. In der Beschreibung zusätzlich \n und \t.
- *  - Titel ist zwingend einzeilig (separater Check).
- * ──────────────────────────────────────────────────────────────── */
-private val INVALID_TITLE_CHARS = Regex("""[^\p{L}\p{M}\p{N}\p{P}\p{S} \u200D\uFE0F]""")
-private val INVALID_DESC_CHARS  = Regex("""[^\p{L}\p{M}\p{N}\p{P}\p{S}\n\t \u200D\uFE0F]""")
+/* --------------------------------------------------------------
+ REGEX Regeln für Textfelder Titel und Beschreibung
+  */
+private val REGEX_TITLE = Regex("""[^\p{L}\p{M}\p{N}\p{P}\p{S} \u200D\uFE0F]""")
+private val REGEX_DESC  = Regex("""[^\p{L}\p{M}\p{N}\p{P}\p{S}\n\t \u200D\uFE0F]""")
 
 private const val TITLE_MAX = 50
 private const val DESC_MAX  = 300
 
-/**
- * Dialog zum Anlegen eines neuen Moments (Titel, Beschreibung, Kategorie, Icon).
- *
- * - Validiert Eingaben live (Länge, Zeichensatz, Einzeiligkeit beim Titel).
- * - Nutzt App-Farben (weiße Felder, dunkelblauer Fokus, hellblauer Dialog-Rand).
- *
- * @param onDismiss Schließt den Dialog.
- * @param onCreate  Liefert die erfassten Daten an den Caller.
+/*
+    Dialogfenster zum Hinzufügen einer neuen Aktivität mit Titel, Beschreibung, Kategorie, Icon).
+    Validiert Eingaben mit REGEX und Überprüfung der Länge
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,15 +45,16 @@ fun AddEntryDialog(
     onDismiss: () -> Unit,
     onCreate: (title: String, desc: String, category: String, imageRes: Int) -> Unit
 ) {
-    // Zustände für Inputs (ohne Filter → Umlaute/Emojis bleiben erhalten)
+    // Textfeld-Inputs
     var title by remember { mutableStateOf("") }
     var desc  by remember { mutableStateOf("") }
 
-    // Kategorie-/Icon-Auswahl
+    // Kategorie
     val categories  = Category.ALL
     var expanded    by remember { mutableStateOf(false) }
     var selectedCat by remember { mutableStateOf(categories.first()) }
 
+    //Icon-Liste
     val icons = listOf(
         R.drawable.directions_walk_24px,
         R.drawable.self_improvement_24px,
@@ -79,25 +71,25 @@ fun AddEntryDialog(
     )
     var selectedIcon by remember { mutableStateOf(icons.first()) }
 
-    // Validierung mit REGEX und trim
+    // Validierung mit REGEX (schaut bei Titel und Beschreibung nach falschen Zeichen und Länge)
     fun firstInvalidChar(s: String, rx: Regex): String? = rx.find(s)?.value
 
     val titleTooShort    = title.trim().isEmpty()
     val titleTooLong     = title.length > TITLE_MAX
-    val titleHasInvalid  = INVALID_TITLE_CHARS.containsMatchIn(title)
-    val titleHasNewline  = title.contains('\n') || title.contains('\r') // Titel soll einzeilig sein
-    val titleBadChar     = firstInvalidChar(title, INVALID_TITLE_CHARS)
+    val titleHasInvalid  = REGEX_TITLE.containsMatchIn(title)
+    val titleHasNewline  = title.contains('\n') || title.contains('\r')
+    val titleBadChar     = firstInvalidChar(title, REGEX_TITLE)
 
     val descTooShort     = desc.trim().length < 3
     val descTooLong      = desc.length > DESC_MAX
-    val descHasInvalid   = INVALID_DESC_CHARS.containsMatchIn(desc)
-    val descBadChar      = firstInvalidChar(desc, INVALID_DESC_CHARS)
+    val descHasInvalid   = REGEX_DESC.containsMatchIn(desc)
+    val descBadChar      = firstInvalidChar(desc, REGEX_DESC)
 
     val titleError = titleTooShort || titleTooLong || titleHasInvalid || titleHasNewline
     val descError  = descTooShort  || descTooLong  || descHasInvalid
     val canCreate  = !titleError && !descError && selectedCat in categories
 
-    // Einheitliche TextField-Farben
+    // Textfeld Farben
     val tfColors = OutlinedTextFieldDefaults.colors(
         focusedContainerColor       = Color.White,
         unfocusedContainerColor     = Color.White,
@@ -112,18 +104,22 @@ fun AddEntryDialog(
         unfocusedTrailingIconColor  = NavBlue.copy(alpha = 0.8f)
     )
 
+    /* ------------------------------------------------------------------------
+    * Aufbau des Fensters
+    * */
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor   = LightBlue,
-        title = { Text("Neuen Moment anlegen", color = MaterialTheme.colorScheme.onSurface) },
+        title = { Text("Neue Aktivität anlegen", color = MaterialTheme.colorScheme.onSurface) },
         text = {
-            // Weißer Content-Block im hellblauen Dialog
+            // Rahmenfenster hellblau, innen weiß
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier
                     .background(Color.White, MaterialTheme.shapes.medium)
                     .padding(12.dp)
             ) {
+                //Titel
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
@@ -145,7 +141,7 @@ fun AddEntryDialog(
                     },
                     colors = tfColors
                 )
-
+                //Beschreibung
                 OutlinedTextField(
                     value = desc,
                     onValueChange = { desc = it },
@@ -167,6 +163,7 @@ fun AddEntryDialog(
                     colors = tfColors
                 )
 
+                //Kategorieauswahl mit Dropdown
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = it }
@@ -180,8 +177,6 @@ fun AddEntryDialog(
                         modifier = Modifier.menuAnchor(),
                         colors = tfColors
                     )
-
-                    // Menü in Weiß, neutrale Item-Farben
                     ExposedDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
@@ -201,8 +196,8 @@ fun AddEntryDialog(
                     }
                 }
 
+                //Icon Auswahl
                 Text("Icon auswählen:", style = MaterialTheme.typography.labelLarge)
-
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(4),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -232,6 +227,8 @@ fun AddEntryDialog(
                 }
             }
         },
+
+        //Bestätigung und Abbrechen Button
         confirmButton = {
             TextButton(
                 enabled = canCreate,
