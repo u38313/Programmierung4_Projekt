@@ -10,17 +10,31 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/* ─────────────────────────────────────────────────────────────
+ * AppDatabase
+ * Zentrale Room-Datenbank.
+ *
+ * - Beinhaltet die Tabellen:
+ *     • entries (PmaEntryEntity)
+ *     • activity_logs (ActivityLogEntity)
+ * - Stellt das DAO (PmaDao) bereit.
+ * - Erstinitialisierung: Preseed mit DemoData in onCreate().
+ *   (wird nur beim allerersten Anlegen der DB ausgeführt)
+ * ───────────────────────────────────────────────────────────── */
 @Database(
     entities = [PmaEntryEntity::class, ActivityLogEntity::class],
     version = 1,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
+
+    /** Zugriffspunkt für alle Datenbankoperationen. */
     abstract fun dao(): PmaDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
 
+        /** Singleton-Instanz der Datenbank liefern/erstellen. */
         fun get(context: Context): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(
@@ -29,9 +43,14 @@ abstract class AppDatabase : RoomDatabase() {
                     "mypma.db"
                 )
                     .addCallback(object : Callback() {
+
+                        /** Wird nur beim ersten Erstellen der DB aufgerufen. */
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            // Preseed mit DemoData (nur beim allerersten Erstellen)
+
+                            // Preseed: Demo-Einträge asynchron einfügen.
+                            // Hinweis: Wir holen uns ein DAO über get(context),
+                            // um Inserts bequem per DAO vorzunehmen.
                             CoroutineScope(Dispatchers.IO).launch {
                                 val dao = get(context).dao()
                                 val initial = DemoData.initial().map {
@@ -47,7 +66,8 @@ abstract class AppDatabase : RoomDatabase() {
                             }
                         }
                     })
-                    .build().also { INSTANCE = it }
+                    .build()
+                    .also { INSTANCE = it }
             }
     }
 }

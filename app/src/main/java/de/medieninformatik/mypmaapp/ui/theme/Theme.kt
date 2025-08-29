@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
@@ -37,15 +38,19 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun MyPmaAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // <- aus
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (darkTheme) dynamicDarkColorScheme(LocalContext.current)
-            else dynamicLightColorScheme(LocalContext.current)
-        darkTheme -> darkColorScheme()
-        else -> lightColorScheme()
-    }
-    MaterialTheme(colorScheme = colorScheme, typography = Typography(), content = content)
+    val colors = if (darkTheme) darkColorScheme(
+        primary = Color(0xFF8B5CF6),
+        secondary = Color(0xFF22C55E),
+        tertiary = Color(0xFF14B8A6),
+        // … gern ergänzen …
+    ) else lightColorScheme(
+        primary = Color(0xFF8B5CF6),
+        secondary = Color(0xFF22C55E),
+        tertiary = Color(0xFF14B8A6),
+        // … gern ergänzen …
+    )
+    MaterialTheme(colorScheme = colors, content = content)
 }
