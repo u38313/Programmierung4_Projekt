@@ -26,7 +26,8 @@ private val LightColorScheme = lightColorScheme(
 
 )
 
-
+//Theme wird nicht mehr genutzt, Farben befinden sich jetzt in Color
+// oder werden an den benötigten Stellen direkt definiert
 @Composable
 fun MyPmaAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

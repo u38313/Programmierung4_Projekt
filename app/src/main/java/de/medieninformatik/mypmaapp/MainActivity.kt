@@ -533,7 +533,7 @@ private fun ActivityLogScreen(
                             .fillMaxWidth()
                             .padding(vertical = 32.dp),
                         contentAlignment = Alignment.Center
-                    ) { Text("Noch keine Aktivitäten protokolliert.") }
+                    ) { Text("Noch keine Aktivitäten aufgezeichnet.") }
                 }
             } else {
                 items(logs, key = { it.id }) { log ->

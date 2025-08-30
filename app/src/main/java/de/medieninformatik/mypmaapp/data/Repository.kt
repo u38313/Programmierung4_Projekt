@@ -19,18 +19,10 @@ class Repository(private val dao: PmaDao) {
     val logs: Flow<List<ActivityLogEntity>> = dao.logsFlow()
 
     //Neuen Aktivitätseintrag speichern
-    suspend fun addEntry(
-        title: String,
-        desc: String,
-        category: String,
-        imageRes: Int
+    suspend fun addEntry(title: String, desc: String, category: String, imageRes: Int
     ) {
         dao.insertEntry(
-            PmaEntryEntity(
-                title = title,
-                description = desc,
-                category = category,
-                imageRes = imageRes
+            PmaEntryEntity(title = title, description = desc, category = category, imageRes = imageRes
             )
         )
     }
